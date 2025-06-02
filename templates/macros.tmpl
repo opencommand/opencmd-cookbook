@@ -1,0 +1,46 @@
+{{define "outputcommand"}}
+    {{if eq (len .Suggestions) 0}}
+    <a href="http://manpages.ubuntu.com/manpages/precise/en/man{{.MP.Section}}/{{.MP.Source}}.html">{{.MP.Program}}</a>
+    {{else}}
+        <span class="dropdown">
+            <b class="caret" data-toggle="dropdown"></b>
+            <a href="http://manpages.ubuntu.com/manpages/precise/en/man{{.MP.Section}}/{{.MP.Source}}.html">{{.MP.Program}}</a>
+            <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu">
+              <li>other manpages</li>
+              <li class="divider"></li>
+            {{range .Suggestions}}
+              <li><a tabindex="-1" href="/explain/{{.Link}}">{{.Text}}</a></li>
+            {{end}}
+            </ul>
+        </span>
+    {{end}}
+    {{if .MP.Synopsis}}- {{.MP.Synopsis}}{{end}}
+{{end}}
+
+{{define "outputcommandexplain"}}
+    {{if eq (len .Suggestions) 0}}
+    <span {{template "spanclasses" .}} style="word-spacing: 0px;"><a href="/explain/{{.Section}}/{{.Source}}">{{.Match}}</a></span>
+    {{else}}
+                <span class="dropdown">
+                    <span style="word-spacing: 0px;">
+                    <b class="caret" data-toggle="dropdown"></b>
+                    <span {{template "spanclasses" .}}><a href="/explain/{{.Section}}/{{.Source}}">{{.Match}}</a></span>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu">
+                      <li>other manpages</li>
+                      <li class="divider"></li>
+                      {{range .Suggestions}}
+                      <li><a tabindex="-1" href="/explain?cmd={{.Cmd}}">{{.Text}}</a></li>
+                      {{end}}
+                    </ul>
+                    </span>
+                </span>
+    {{end}}
+{{end}}
+
+{{define "spanclasses"}}
+class="{{.CommandClass}}"{{if .HelpClass}} helpref="{{.HelpClass}}"{{end}}
+{{end}}
+
+{{define "examplebullet"}}
+<li><a href='/explain?cmd={{.Cmd}}'>{{.Cmd}}</a></li>
+{{end}}

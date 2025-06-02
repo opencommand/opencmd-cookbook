@@ -1,0 +1,21 @@
+version: "1.0.0"
+commands:
+  - name: ls
+    description: list directory contents
+    synopsis: ls [OPTION]... [FILE]...
+    options:
+      - name: all
+        alias: [-a, --all]
+        description: do not ignore entries starting with .
+        type: bool
+        default: false
+      - name: almostAll
+        alias: [-A, --almost-all]
+        description: do not list implied . and ..
+        type: bool
+        default: false
+      - name: author
+        alias: [--author]
+        description: with -l, print the author of each file
+        type: bool
+        default: false
