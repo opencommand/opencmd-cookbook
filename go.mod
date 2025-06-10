@@ -3,7 +3,10 @@ module opencmd
 go 1.23.5
 
 require (
+	github.com/fsnotify/fsnotify v1.9.0
 	github.com/gin-gonic/gin v1.10.1
+	github.com/gorilla/websocket v1.5.3
+	github.com/magefile/mage v1.15.0
 	github.com/sirupsen/logrus v1.9.3
 	sigs.k8s.io/yaml v1.4.0
 )

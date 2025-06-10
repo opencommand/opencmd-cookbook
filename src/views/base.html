@@ -1,0 +1,94 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>OpenCommand{{template "title" .}}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    {{- if .Config.DEBUG}}
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen" id="bootstrapCSS">
+    <link href="/static/css/font-awesome.min.css" rel="stylesheet" media="screen">
+    {{else}}
+    <link href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/css/bootstrap.min.css" rel="stylesheet"
+        media="screen" id="bootstrapCSS">
+    <link href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/3.2.1/css/font-awesome.min.css" rel="stylesheet">
+    {{- end}}
+    <link href="/static/css/es.css" rel="stylesheet" media="screen">
+    <link href='//fonts.googleapis.com/css?family=Berkshire+Swash' rel='stylesheet' type='text/css'>
+    {{template "head" .}}
+</head>
+
+<body data-theme="default">
+    <div class="container">
+        <div class="small-push"></div>
+        <div class="header">
+            <div class="text-center">
+                <a href="/">
+                    <img src="/static/img/opencmd.png" alt="OpenCommand" style="height: 250px; width: 500px;">
+                </a>
+            </div>
+            <div style="position: relative;">
+                <ul class="inline menu">
+                    <li><a href="/about">about</a></li>
+                    <li><a href="https://github.com/opencommand/opencmd-cookbook"><i class="icon-github"></i></a></li>
+                    {{template "menu" .}}
+                    <li id="themeContainer" class="dropdown">
+                        <span data-toggle="dropdown">theme</span>
+                        <b class="caret" data-toggle="dropdown"></b>
+                        <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu">
+                            <li><a tabindex="-1" href="#" data-theme-name="default">Light</a></li>
+                            <li><a tabindex="-1" href="#" data-theme-name="dark">Dark</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="small-push"></div>
+            <div class="text-center">
+                {{template "header" .}}
+            </div>
+        </div>
+        {{template "content" .}}
+    </div>
+    {{template "footer" .}}
+    {{- if .Config.DEBUG}}
+    <script src="/static/js/jquery.js"></script>
+    <script src="/static/js/underscore.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    {{else}}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap.min.js"></script>
+    {{- end}}
+    <script src="/static/js/es.js"></script>
+    {{- template "js" .}}
+    <script type="text/javascript">
+        let ws;
+
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:8080/ws');
+            ws.onopen = function () {
+                console.log("WebSocket connection established");
+            };
+            ws.onmessage = function (event) {
+                if (event.data === "reload") {
+                    console.log("Template changed, reloading...");
+                    location.reload();
+                }
+            };
+            ws.onerror = function (error) {
+                console.error("WebSocket error:", error);
+            };
+            ws.onclose = function () {
+                console.log("WebSocket connection closed");
+            };
+        }
+
+        window.onload = function () {
+            connectWebSocket();
+        };
+    </script>
+</body>
+
+</html>
+{{end}}
