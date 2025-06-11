@@ -5,7 +5,9 @@ var debug: boolean = false;
 var themeCookieName: string = 'theme';
 
 if (!debug) {
+    //@ts-ignore
     console = console || {};
+    //@ts-ignore
     console.log = function () { };
 }
 

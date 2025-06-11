@@ -5,14 +5,15 @@ package main
 import (
 	"archive/zip"
 	"fmt"
+	"github.com/caarlos0/log"
+	"github.com/magefile/mage/mg"
+	"github.com/magefile/mage/sh"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/magefile/mage/mg"
-	"github.com/magefile/mage/sh"
 )
 
 const FontAwesomeUrl = "https://github.com/FortAwesome/Font-Awesome/archive/refs/tags/v3.2.1.zip"
@@ -26,11 +27,30 @@ func Build() error {
 }
 
 func Setup() error {
-	mg.Deps(ResolveDeps)
+	mg.Deps(resolveStaticFiles, resolveBootstrap, resolveDeps)
 	return nil
 }
 
-func ResolveDeps() error {
+func resolveNPMDeps() error {
+	if err := sh.Run("pnpm", "i"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func resolveBootstrap() error {
+	downloadFile("https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap.js", "./dist/static/js/bootstrap.js")
+	downloadFile("https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/js/bootstrap.min.js", "./dist/static/js/bootstrap.min.js")
+	downloadFile("https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/css/bootstrap.css", "./dist/static/css/bootstrap.css")
+	downloadFile("https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/css/bootstrap.min.css", "./dist/static/css/bootstrap.min.css")
+	downloadFile("https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/css/bootstrap.responsive.css", "./dist/static/css/bootstrap.responsive.css")
+	downloadFile("https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.1/css/bootstrap.responsive.min.css", "./dist/static/css/bootstrap.responsive.min.css")
+	downloadFile("https://raw.githubusercontent.com/thomaspark/bootswatch/refs/tags/v2.3.2/cyborg/bootstrap.min.css", "./dist/static/css/bootstrap-cyborg.min.css")
+	return nil
+}
+
+func resolveDeps() error {
+	mg.Deps(resolveNPMDeps)
 	zipPath := "font-awesome-3.2.1.zip"
 	err := downloadFile(FontAwesomeUrl, zipPath)
 	if err != nil {
@@ -55,12 +75,75 @@ func ResolveDeps() error {
 	}
 
 	fmt.Println("成功下载并提取Font Awesome 3.2.1!")
+
+	copyFile("node_modules/jquery/jquery.js", "dist/static/js/jquery.js")
+	copyFile("node_modules/underscore/underscore.js", "dist/static/js/underscore.js")
+	copyFile("node_modules/d3/d3.js", "dist/static/js/d3.v3.js")
+	copyFile("node_modules/d3/d3.min.js", "dist/static/js/d3.v3.min.js")
+	return nil
+}
+
+func resolveStaticFiles() error {
+	return filepath.Walk("src/static", func(path string, info fs.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		dst := strings.Replace(path, "src", "dist", 1)
+		os.MkdirAll(filepath.Dir(dst), os.ModePerm)
+		err = copyFile(path, dst)
+		if err != nil {
+			return err
+		}
+		if filepath.Ext(path) == ".ts" {
+			defer os.Remove(dst)
+			err = sh.Run("pnpm", "exec", "tsc", dst)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// copyFile copies the file from src to dst
+func copyFile(src, dst string) error {
+	// 打开源文件
+	sourceFile, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("failed to open source file: %w", err)
+	}
+	defer sourceFile.Close()
+
+	// 创建目标文件（若文件已存在将被覆盖）
+	destFile, err := os.Create(dst)
+	if err != nil {
+		return fmt.Errorf("failed to create destination file: %w", err)
+	}
+	defer destFile.Close()
+
+	// 复制内容
+	_, err = io.Copy(destFile, sourceFile)
+	if err != nil {
+		return fmt.Errorf("failed to copy file content: %w", err)
+	}
+
+	// 保证写入磁盘
+	err = destFile.Sync()
+	if err != nil {
+		return fmt.Errorf("failed to flush to disk: %w", err)
+	}
+
 	return nil
 }
 
 func downloadFile(url, filepath string) error {
+	log.WithField("url", url).Info("downloding")
 	resp, err := http.Get(url)
 	if err != nil {
+		log.WithError(err).WithField("suggestion", "You can manually download the file and place it in the dist directory.").Error("fail to donwload")
 		return err
 	}
 	defer resp.Body.Close()
