@@ -8,10 +8,12 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/opencommand/echochic"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,7 +37,16 @@ func WatchWeb(path string) {
 		logrus.Fatalf("failed to recursively watch templates folder: %v", err)
 	}
 
-	logrus.Info("Watching template files for changes...")
+	fmt.Println(echochic.Styled().
+		Grey(time.Now().Format("15:04:05")).
+		Space().
+		With(echochic.Bold, echochic.Blue).
+		Text("[FS]").
+		Space().
+		Green("INFO").
+		Space().
+		Grey("Watching template files for changes...").
+		String())
 
 	for {
 		select {
@@ -108,7 +119,7 @@ func addWatchRecursive(watcher *fsnotify.Watcher, root string) error {
 			if err := watcher.Add(path); err != nil {
 				logrus.Errorf("Failed to watch directory: %s, err: %v", path, err)
 			} else {
-				logrus.Infof("Watching: %s", path)
+				// logrus.Infof("Watching: %s", path)
 			}
 		}
 		return nil
